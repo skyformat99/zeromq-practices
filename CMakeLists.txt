@@ -20,17 +20,19 @@ find_package(Boost 1.41.0
 include_directories(${ZMQ_ROOT}/include)
 link_directories(${ZMQ_ROOT}/lib)
 
+set(Common_LIBS libzmq-v100-mt-3_2_4.lib)
+
 add_executable(task_ventilator task_ventilator.cpp)
-target_link_libraries(task_ventilator libzmq-v100-mt-3_2_4.lib)
+target_link_libraries(task_ventilator ${Common_LIBS})
 
 add_executable(task_worker task_worker.cpp)
-target_link_libraries(task_worker libzmq-v100-mt-3_2_4.lib)
+target_link_libraries(task_worker ${Common_LIBS})
 
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_executable(task_sink task_sink.cpp)
 target_link_libraries(task_sink
-    libzmq-v100-mt-3_2_4.lib
+    ${Common_LIBS}
     ${Boost_LIBRARIES}
 )
 
@@ -43,5 +45,18 @@ include_directories(${PTHREAD_ROOT}/include)
 link_directories(${PTHREAD_ROOT}/lib/x86)
 
 add_executable(mtrelay mtrelay.cpp)
-target_link_libraries(mtrelay libzmq-v100-mt-3_2_4.lib pthreadVCE2.lib)
+target_link_libraries(mtrelay ${Common_LIBS} pthreadVCE2.lib)
+
+# hello-world server/client
+add_executable(hwserver hello/server.cpp)
+target_link_libraries(hwserver ${Common_LIBS})
+
+add_executable(hwclient hello/client.cpp)
+target_link_libraries(hwclient ${Common_LIBS})
+
+add_executable(identity zhelpers.h identity.cpp)
+target_link_libraries(identity ${Common_LIBS})
+
+add_executable(rtreq zhelpers.h rtreq.cpp)
+target_link_libraries(rtreq ${Common_LIBS} pthreadVCE2.lib)
 
