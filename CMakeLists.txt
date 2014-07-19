@@ -60,3 +60,6 @@ target_link_libraries(identity ${Common_LIBS})
 add_executable(rtreq zhelpers.h rtreq.cpp)
 target_link_libraries(rtreq ${Common_LIBS} pthreadVCE2.lib)
 
+add_executable(rtdealer zhelpers.h rtdealer.cpp)
+target_link_libraries(rtdealer ${Common_LIBS} pthreadVCE2.lib)
+
