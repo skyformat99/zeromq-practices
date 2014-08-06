@@ -20,6 +20,8 @@ find_package(Boost 1.41.0
 include_directories(${ZMQ_ROOT}/include)
 link_directories(${ZMQ_ROOT}/lib)
 
+add_definitions(-DUSE_RANDOM_IDENTITY)
+
 set(Common_LIBS libzmq-v100-mt-3_2_4.lib)
 
 add_executable(task_ventilator task_ventilator.cpp)
@@ -62,4 +64,7 @@ target_link_libraries(rtreq ${Common_LIBS} pthreadVCE2.lib)
 
 add_executable(rtdealer zhelpers.h rtdealer.cpp)
 target_link_libraries(rtdealer ${Common_LIBS} pthreadVCE2.lib)
+
+add_executable(mtrand mtrand.cpp)
+target_link_libraries(mtrand pthreadVCE2.lib)
 

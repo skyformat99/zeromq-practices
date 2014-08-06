@@ -2,12 +2,14 @@
 //
 // ROUTER-to-DEALER example
 //
-#include "zhelpers.h"
 #include <pthread.h>
+
+#include "zhelpers.h"
+//#include "time_util.h"
 
 const int k_worker_num = 10;
 #ifdef USE_RANDOM_IDENTITY
-pthread_mutex_t rand_mutex = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t rand_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif // USE_RANDOM_IDENTITY
 
 static void* worker_task(void* data)
@@ -15,10 +17,16 @@ static void* worker_task(void* data)
     void* context = zmq_ctx_new();
     void* worker = zmq_socket(context, ZMQ_DEALER);
 #ifdef USE_RANDOM_IDENTITY
-    //@note lock needed, because 'rand' is not reentrant and thread-safe
-    pthread_mutex_lock(&rand_mutex);
+    // //@note lock needed, because 'rand' is not reentrant and thread-safe
+    // pthread_mutex_lock(&rand_mutex);
+    // srand((uint32_t)mclock());
+    // msleep(10);
+    // s_set_id(worker);
+    // pthread_mutex_unlock(&rand_mutex);
+    unsigned int id = (unsigned int)pthread_self().p;
+    // Feed srand with current thread id
+    srand(id);
     s_set_id(worker);
-    pthread_mutex_unlock(&rand_mutex);
 #else
     int id = (int)data;
     char buf[16];
@@ -62,11 +70,10 @@ int main()
     void* context = zmq_ctx_new();
     void* broker = zmq_socket(context, ZMQ_ROUTER);
     zmq_bind(broker, "tcp://*:5671");
-    //srand(time(0));
 
     // Start 10 workers
 #ifdef USE_RANDOM_IDENTITY
-    pthread_mutex_init(&rand_mutex, NULL);
+    //pthread_mutex_init(&rand_mutex, NULL);
 #endif // USE_RANDOM_IDENTITY
     for (int i = 0; i < k_worker_num; ++i) {
         pthread_t worker;
@@ -97,7 +104,7 @@ int main()
     }
 
 #ifdef USE_RANDOM_IDENTITY
-    pthread_mutex_destroy(&rand_mutex);
+    //pthread_mutex_destroy(&rand_mutex);
 #endif // USE_RANDOM_IDENTITY
     zmq_close(broker);
     zmq_ctx_destroy(context);
