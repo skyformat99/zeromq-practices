@@ -17,12 +17,25 @@ find_package(Boost 1.41.0
     REQUIRED
 )
 
-include_directories(${ZMQ_ROOT}/include)
-link_directories(${ZMQ_ROOT}/lib)
+# czmq
+set(CZMQ_ROOT "$ENV{CZMQ_ROOT}")
+if(NOT CZMQ_ROOT)
+    message(FATAL_ERROR "czmq needed to compile")
+endif()
+
+include_directories(
+    .
+    ${ZMQ_ROOT}/include
+    ${CZMQ_ROOT}/include
+)
+link_directories(
+    ${ZMQ_ROOT}/lib
+    ${CZMQ_ROOT}/lib
+)
 
 add_definitions(-DUSE_RANDOM_IDENTITY)
 
-set(Common_LIBS libzmq-v100-mt-3_2_4.lib)
+set(Common_LIBS libzmq-v100-mt-3_2_4.lib czmq.lib)
 
 add_executable(task_ventilator task_ventilator.cpp)
 target_link_libraries(task_ventilator ${Common_LIBS})
@@ -67,4 +80,7 @@ target_link_libraries(rtdealer ${Common_LIBS} pthreadVCE2.lib)
 
 add_executable(mtrand mtrand.cpp)
 target_link_libraries(mtrand pthreadVCE2.lib)
+
+add_executable(asyncsrv asyncsrv.cpp)
+target_link_libraries(asyncsrv ${Common_LIBS})
 
