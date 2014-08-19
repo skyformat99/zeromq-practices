@@ -382,7 +382,21 @@ namespace zmq
             if (rc != 0)
                 throw error_t ();
         }
-        
+
+        template<typename Ret>
+        inline Ret getsockopt (int option_)
+        {
+            Ret option = 0;
+            size_t option_len = sizeof (int);
+            getsockopt(option_, &option, &option_len);
+            return option;
+        }
+        // Whether or not there are remaining frames for the last reply
+        inline int more ()
+        {
+            return getsockopt<int>(ZMQ_RCVMORE);
+        }
+
         inline void bind (const char *addr_)
         {
             int rc = zmq_bind (ptr, addr_);
