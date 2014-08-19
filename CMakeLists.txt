@@ -84,3 +84,6 @@ target_link_libraries(mtrand pthreadVCE2.lib)
 add_executable(asyncsrv asyncsrv.cpp)
 target_link_libraries(asyncsrv ${Common_LIBS})
 
+add_executable(hello hello.cpp)
+target_link_libraries(hello ${Common_LIBS} pthreadVCE2.lib)
+
