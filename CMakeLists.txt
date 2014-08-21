@@ -35,7 +35,13 @@ link_directories(
 
 add_definitions(-DUSE_RANDOM_IDENTITY)
 
-set(Common_LIBS libzmq-v100-mt-3_2_4.lib czmq.lib)
+# Pthread-w32
+set(PTHREAD_ROOT $ENV{PTHREAD_ROOT})
+if(NOT PTHREAD_ROOT)
+    message(FATA_ERROR "Pthread required")
+endif()
+include_directories(${PTHREAD_ROOT}/include)
+link_directories(${PTHREAD_ROOT}/lib/x86)
 
 add_executable(task_ventilator task_ventilator.cpp)
 target_link_libraries(task_ventilator ${Common_LIBS})
@@ -45,22 +51,17 @@ target_link_libraries(task_worker ${Common_LIBS})
 
 include_directories(${Boost_INCLUDE_DIRS})
 
+set(Common_LIBS libzmq-v100-mt-3_2_4.lib czmq.lib pthreadVCE2.lib)
+
+#
 add_executable(task_sink task_sink.cpp)
 target_link_libraries(task_sink
     ${Common_LIBS}
     ${Boost_LIBRARIES}
 )
 
-# Pthread-w32
-set(PTHREAD_ROOT $ENV{PTHREAD_ROOT})
-if(NOT PTHREAD_ROOT)
-    message(FATA_ERROR "Pthread required")
-endif()
-include_directories(${PTHREAD_ROOT}/include)
-link_directories(${PTHREAD_ROOT}/lib/x86)
-
 add_executable(mtrelay mtrelay.cpp)
-target_link_libraries(mtrelay ${Common_LIBS} pthreadVCE2.lib)
+target_link_libraries(mtrelay ${Common_LIBS})
 
 # hello-world server/client
 add_executable(hwserver hello/server.cpp)
@@ -73,10 +74,10 @@ add_executable(identity zhelpers.h identity.cpp)
 target_link_libraries(identity ${Common_LIBS})
 
 add_executable(rtreq zhelpers.h rtreq.cpp)
-target_link_libraries(rtreq ${Common_LIBS} pthreadVCE2.lib)
+target_link_libraries(rtreq ${Common_LIBS})
 
 add_executable(rtdealer zhelpers.h rtdealer.cpp)
-target_link_libraries(rtdealer ${Common_LIBS} pthreadVCE2.lib)
+target_link_libraries(rtdealer ${Common_LIBS})
 
 add_executable(mtrand mtrand.cpp)
 target_link_libraries(mtrand pthreadVCE2.lib)
@@ -85,5 +86,14 @@ add_executable(asyncsrv asyncsrv.cpp)
 target_link_libraries(asyncsrv ${Common_LIBS})
 
 add_executable(hello hello.cpp)
-target_link_libraries(hello ${Common_LIBS} pthreadVCE2.lib)
+target_link_libraries(hello ${Common_LIBS})
+
+add_executable(state_flow cluster/state_flow.cpp)
+target_link_libraries(state_flow ${Common_LIBS})
+
+add_executable(pub pub.cpp)
+target_link_libraries(pub ${Common_LIBS})
+
+add_executable(sub sub.cpp)
+target_link_libraries(sub ${Common_LIBS})
 
