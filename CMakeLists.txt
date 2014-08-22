@@ -97,3 +97,6 @@ target_link_libraries(pub ${Common_LIBS})
 add_executable(sub sub.cpp)
 target_link_libraries(sub ${Common_LIBS})
 
+add_executable(task_flow cluster/task_flow.cpp)
+target_link_libraries(task_flow ${Common_LIBS})
+
