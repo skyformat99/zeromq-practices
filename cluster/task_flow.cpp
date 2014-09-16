@@ -29,7 +29,7 @@ static void* client_task(void* arg)
 #ifdef WIN32  // ZeroMQ for Windows does not support IPC for the moment
     zsocket_connect(client, "tcp://127.0.0.1:%s", self);
 #else
-    zsocket_connect(client, "ipc://%s-localfe.ipc", self);
+    zsocket_connect(client, "ipc:///tmp/%s-localfe.ipc", self);
 #endif // WIN32
     
     while (true) {
@@ -55,7 +55,7 @@ static void* worker_task(void* arg)
 #ifdef WIN32
     zsocket_connect(worker, "tcp://127.0.0.1:1%s", self);
 #else
-    zsocket_connect(worker, "ipc://%s-localbe.ipc", self);
+    zsocket_connect(worker, "ipc:///tmp/%s-localbe.ipc", self);
 #endif // WIN32
 
     // Tell broker we're ready to work
@@ -96,7 +96,9 @@ int main(int argc, char* argv[])
     printf("I: preparing broker at %s...\n", self);
     srand((unsigned)time(0));
     
+#ifdef WIN32
     zsys_init();
+#endif // WIN32
     zctx_t* ctx = zctx_new();
     // Bind cloud frontend
     void* cloudfe = zsocket_new(ctx, ZMQ_ROUTER);
@@ -104,7 +106,7 @@ int main(int argc, char* argv[])
 #ifdef WIN32
     zsocket_bind(cloudfe, "tcp://127.0.0.1:2%s", self);
 #else
-    zsocket_bind(cloudfe, "ipc://%s-cloud.ipc", self);
+    zsocket_bind(cloudfe, "ipc:///tmp/%s-cloud.ipc", self);
 #endif // WIN32
 
     // Connect cloud backend to all peers
@@ -116,7 +118,7 @@ int main(int argc, char* argv[])
 #ifdef WIN32
         zsocket_connect(cloudbe, "tcp://127.0.0.1:2%s", peer);
 #else
-        zsocket_connect(cloudbe, "ipc://%s-cloud.ipc", peer);
+        zsocket_connect(cloudbe, "ipc:///tmp/%s-cloud.ipc", peer);
 #endif // WIN32
     }
     
@@ -127,8 +129,8 @@ int main(int argc, char* argv[])
     zsocket_bind(localfe, "tcp://127.0.0.1:%s", self);
     zsocket_bind(localbe, "tcp://127.0.0.1:1%s", self);
 #else
-    zsocket_bind(localfe, "ipc://%s-localfe.ipc", self);
-    zsocket_bind(localbe, "ipc://%s-localbe.ipc", self);
+    zsocket_bind(localfe, "ipc:///tmp/%s-localfe.ipc", self);
+    zsocket_bind(localbe, "ipc:///tmp/%s-localbe.ipc", self);
 #endif // WIN32
 
     // Let the user to tell us when to start
