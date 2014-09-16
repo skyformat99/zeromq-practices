@@ -12,8 +12,8 @@
 
 namespace {  // Internal
 
-const int NBR_CLIENTS = 10;
-const int NBR_WORKERS = 5;
+const int NBR_CLIENTS = 1;
+const int NBR_WORKERS = 1;
 const char WORKER_READY[] = "\001";  // Signal that worker is ready
 
 char* self = 0;
@@ -32,10 +32,10 @@ void* client_task(void* arg)
     void* client = zsocket_new(ctx, ZMQ_REQ);
     zsocket_connect(client, "ipc:///tmp/%s-localfe.ipc", self);
     void* monitor = zsocket_new(ctx, ZMQ_PUSH);
-    zsocket_connect(client, "ipc:///tmp/%s-monitor.ipc", self);
+    zsocket_connect(monitor, "ipc:///tmp/%s-monitor.ipc", self);
 
     while (true) {
-        sleep(randof(5));
+        msleep(randof(5) * 1000);
         int burst = randof(15);
         while (burst--) {
             char task_id[5];
@@ -44,14 +44,15 @@ void* client_task(void* arg)
             zstr_send(client, task_id);
             // Wait at most ten seconds for reply, then complain
             zmq_pollitem_t items[] = { { client, 0, ZMQ_POLLIN, 0 } };
-            int rc = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC * 1000);
+            //int rc = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC * 1000);
+            int rc = zmq_poll(items, 1, -1);
             if (rc == -1)
                 break;  // Interrupted
             if (items[0].revents & ZMQ_POLLIN) {
                 char* reply = zstr_recv(client);
                 if (!reply)
                     break;  // Interrupted
-                // Worker is supposed to answer with the client with task id
+                // Worker is supposed to answer the client with task id
                 assert(streq(reply, task_id));
                 zstr_send(monitor, "%s", reply);
                 free(reply);
@@ -74,7 +75,7 @@ void* worker_task(void* arg)
 
     zctx_t* ctx = zctx_new();
     void* worker = zsocket_new(ctx, ZMQ_REQ);
-    zsocket_connect(ctx, "ipc:///tmp/%s-localbe.ipc", self);
+    zsocket_connect(worker, "ipc:///tmp/%s-localbe.ipc", self);
     // Tell the broker that we're ready before serving any requests
     zframe_t* frame = zframe_new(WORKER_READY, 1);
     zframe_send(&frame, worker, 0);
@@ -202,7 +203,7 @@ int main(int argc, char* argv[])
             // Do not route the message further if it's READY message,
             // by destroying it
             zframe_t* frame = zmsg_first(msg);
-            if (!memcpy(zframe_data(frame), WORKER_READY, 1))
+            if (!memcmp(zframe_data(frame), WORKER_READY, 1))
                 zmsg_destroy(&msg);
         }
         // Reply from peer broker
@@ -220,7 +221,7 @@ int main(int argc, char* argv[])
             const char* peer = argv[i];
             char* data = (char*)zframe_data(zmsg_first(msg));
             int size = zframe_size(zmsg_first(msg));
-            if (size == strlen(peer) && memcpy(data, peer, size) == 0)
+            if (size == strlen(peer) && memcmp(data, peer, size) == 0)
                 zmsg_send(&msg, cloudfe);
         }
         // Route reply to client if still need to
