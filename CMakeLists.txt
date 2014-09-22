@@ -96,3 +96,10 @@ target_link_libraries(task_flow ${LIBS})
 
 add_executable(cluster cluster/prototype.cpp)
 target_link_libraries(cluster ${LIBS})
+
+add_library(zmq_x zmq_x.c)
+target_compile_definitions(zmq_x PUBLIC ZMQ_X_COMPILE)
+target_link_libraries(zmq_x ${ZEROMQ_LIBRARIES})
+
+add_executable(zmq_x_test zmq_x_test.c)
+target_link_libraries(zmq_x_test ${LIBS} zmq_x)
