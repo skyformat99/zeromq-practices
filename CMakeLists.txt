@@ -110,3 +110,9 @@ target_link_libraries(czmq_x ${CZMQ_LIBRARIES} zmq_x)
 
 add_executable(czmq_x_test czmq_x_test.c)
 target_link_libraries(czmq_x_test ${LIBS} zmq_x czmq_x)
+
+add_executable(named_pipe_server named_pipe_win/server.c)
+target_compile_definitions(named_pipe_server PRIVATE UNICODE _UNICODE)
+
+add_executable(named_pipe_client named_pipe_win/client.c)
+target_compile_definitions(named_pipe_client PRIVATE UNICODE _UNICODE)
