@@ -13,7 +13,11 @@ int main(int argc, char* argv[])
     void* sub = zsocket_new(ctx, ZMQ_SUB);
     zsocket_set_subscribe(sub, "");
     //zsocket_connect(sub, "ipc://%s-server.ipc", name);
-    zsocket_connect(sub, "ipc://pub-server.ipc");
+#ifdef WIN32
+    zsocket_connect(sub, "tcp://127.0.0.1:2222");
+#else
+    zsocket_connect(sub, "ipc://pub.ipc");
+#endif
     zmq_pollitem_t items[] = {
         { sub, 0, ZMQ_POLLIN, 0 }
     };
