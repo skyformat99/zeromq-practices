@@ -98,8 +98,15 @@ add_executable(cluster cluster/prototype.cpp)
 target_link_libraries(cluster ${LIBS})
 
 add_library(zmq_x zmq_x.c)
-target_compile_definitions(zmq_x PUBLIC ZMQ_X_COMPILE)
+target_compile_definitions(zmq_x PRIVATE ZMQ_X_COMPILE)
 target_link_libraries(zmq_x ${ZEROMQ_LIBRARIES})
 
 add_executable(zmq_x_test zmq_x_test.c)
 target_link_libraries(zmq_x_test ${LIBS} zmq_x)
+
+add_library(czmq_x czmq_x.c)
+target_compile_definitions(czmq_x PRIVATE CZMQ_X_COMPILE)
+target_link_libraries(czmq_x ${CZMQ_LIBRARIES} zmq_x)
+
+add_executable(czmq_x_test czmq_x_test.c)
+target_link_libraries(czmq_x_test ${LIBS} zmq_x czmq_x)
