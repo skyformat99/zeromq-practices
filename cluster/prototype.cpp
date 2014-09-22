@@ -5,6 +5,7 @@
  * Prototype the full flow of status and tasks
  */
 #include <czmq.h>
+#include "czmq_fix.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -26,7 +27,7 @@ char* self = 0;
 // socket for requests and also pushes statistics to the monitor socket:
 void* client_task(void* arg)
 {
-    srand((unsigned int)pthread_self());
+    srand(zthread_id());
 
     zctx_t* ctx = zctx_new();
     void* client = zsocket_new(ctx, ZMQ_REQ);
@@ -54,10 +55,10 @@ void* client_task(void* arg)
                     break;  // Interrupted
                 // Worker is supposed to answer the client with task id
                 assert(streq(reply, task_id));
-                zstr_send(monitor, "%s", reply);
+                zstr_sendf(monitor, "%s", reply);
                 free(reply);
             } else {
-                zstr_send(monitor, "E: CLIENT EXIT - lost task %s", task_id);
+                zstr_sendf(monitor, "E: CLIENT EXIT - lost task %s", task_id);
                 return 0;
             }
         }
@@ -71,7 +72,7 @@ void* client_task(void* arg)
 // load-balancer.
 void* worker_task(void* arg)
 {
-    srand((unsigned int)pthread_self());
+    srand(zthread_id());
 
     zctx_t* ctx = zctx_new();
     void* worker = zsocket_new(ctx, ZMQ_REQ);
@@ -284,7 +285,7 @@ int main(int argc, char* argv[])
             // Stick our own identity to the envelope
             zstr_sendm(statebe, self);
             // Broadcast the new capacity
-            zstr_send(statebe, "%d", local_capacity);
+            zstr_sendf(statebe, "%d", local_capacity);
         }
     }
 
