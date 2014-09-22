@@ -33,7 +33,7 @@ include_directories(
     ${ZEROMQ_INCLUDE_DIRS}
     ${CZMQ_INCLUDE_DIRS}
     ${PTHREAD_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
+    #${Boost_INCLUDE_DIRS}
 )
 
 add_definitions(-DUSE_RANDOM_IDENTITY)
@@ -64,13 +64,13 @@ target_link_libraries(hwserver ${LIBS})
 add_executable(hwclient hello/client.cpp)
 target_link_libraries(hwclient ${LIBS})
 
-add_executable(identity zhelpers.h identity.cpp)
+add_executable(identity identity.cpp)
 target_link_libraries(identity ${LIBS})
 
-add_executable(rtreq zhelpers.h rtreq.cpp)
+add_executable(rtreq rtreq.cpp)
 target_link_libraries(rtreq ${LIBS})
 
-add_executable(rtdealer zhelpers.h rtdealer.cpp)
+add_executable(rtdealer rtdealer.cpp)
 target_link_libraries(rtdealer ${LIBS})
 
 add_executable(mtrand mtrand.cpp)
@@ -93,3 +93,20 @@ target_link_libraries(sub ${LIBS})
 
 add_executable(task_flow cluster/task_flow.cpp)
 target_link_libraries(task_flow ${LIBS})
+
+add_executable(cluster cluster/prototype.cpp)
+target_link_libraries(cluster ${LIBS})
+
+add_library(zmq_x zmq_x.c)
+target_compile_definitions(zmq_x PRIVATE ZMQ_X_COMPILE)
+target_link_libraries(zmq_x ${ZEROMQ_LIBRARIES})
+
+add_executable(zmq_x_test zmq_x_test.c)
+target_link_libraries(zmq_x_test ${LIBS} zmq_x)
+
+add_library(czmq_x czmq_x.c)
+target_compile_definitions(czmq_x PRIVATE CZMQ_X_COMPILE)
+target_link_libraries(czmq_x ${CZMQ_LIBRARIES} zmq_x)
+
+add_executable(czmq_x_test czmq_x_test.c)
+target_link_libraries(czmq_x_test ${LIBS} zmq_x czmq_x)

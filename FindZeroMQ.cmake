@@ -7,7 +7,7 @@ find_path(
     ZEROMQ_INCLUDE_DIRS
     NAMES zmq.h
     HINTS ${PC_ZEROMQ_INCLUDE_DIRS}
-          $ENV{ZMQ_ROOT}/include
+          $ENV{ZEROMQ_ROOT}/include
 )
 
 set(_ZEROMQ_LIB_NAMES zmq)
@@ -18,7 +18,7 @@ find_library(
     ZEROMQ_LIBRARIES
     NAMES ${_ZEROMQ_LIB_NAMES}
     HINTS ${PC_ZEROMQ_LIBRARY_DIRS}
-          $ENV{ZMQ_ROOT}/lib
+          $ENV{ZEROMQ_ROOT}/lib
 )
 
 include(FindPackageHandleStandardArgs)
