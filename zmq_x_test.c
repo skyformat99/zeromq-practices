@@ -9,6 +9,8 @@
 int main()
 {
     void* ctx = zmq_ctx_new();
+    zmq_init_x(ctx);
+
     void* rep = zmq_socket(ctx, ZMQ_REP);
 
     const char addr[] = "ipc://hello-server.ipc";

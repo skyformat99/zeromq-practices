@@ -99,7 +99,7 @@ target_link_libraries(cluster ${LIBS})
 
 add_library(zmq_x zmq_x.c)
 target_compile_definitions(zmq_x PRIVATE ZMQ_X_COMPILE)
-target_link_libraries(zmq_x ${ZEROMQ_LIBRARIES})
+target_link_libraries(zmq_x ${ZEROMQ_LIBRARIES} ${PTHREAD_LIBRARIES})
 
 add_executable(zmq_x_test zmq_x_test.c)
 target_link_libraries(zmq_x_test ${LIBS} zmq_x)
@@ -119,3 +119,9 @@ target_compile_definitions(named_pipe_client PRIVATE UNICODE _UNICODE)
 
 add_executable(zmq_x_test1 zmq_x_test1.c)
 target_link_libraries(zmq_x_test1 ${LIBS} zmq_x)
+
+add_executable(zmq_x_rep zmq_x_rep.c)
+target_link_libraries(zmq_x_rep ${LIBS} zmq_x)
+
+add_executable(zmq_x_req zmq_x_req.c)
+target_link_libraries(zmq_x_req ${LIBS} zmq_x)

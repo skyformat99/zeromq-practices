@@ -3,6 +3,8 @@
 #include "zmq_x.h"
 
 #include <zmq.h>
+#include <pthread.h>
+#include <assert.h>
 
 #define MAX_ENDPOINTS 100
 
@@ -12,6 +14,39 @@ struct addr_endpoint_t {
 };
 static struct addr_endpoint_t s_endpoints[MAX_ENDPOINTS];
 static int s_endpoints_size = 0;
+
+static const char s_ipc_endpoint[] = "tcp://127.0.0.1:5555";
+static void* s_ipc_server = NULL;
+static void* s_ipc_client = NULL;
+
+static void* ipc_server_task(void* arg)
+{
+    char addr[256] = {0};
+    int len = 0;
+    while (1) {
+        len = zmq_recv(s_ipc_server, addr, sizeof(addr), 0);
+        if (len == -1)
+            break;  // Interrupted
+        addr[len] = 0;
+        const char* endpoint = zmq_endpoint_x(addr);
+        assert(endpoint);
+        printf("D: resolve '%s' as '%s'\n", addr, endpoint);
+        len = zmq_send(s_ipc_server, endpoint, strlen(endpoint), 0);
+        if (len == -1)
+            break;  // Interrupted
+    }
+    zmq_close(s_ipc_server);
+    return NULL;
+}
+
+static const char* insert_endpoint_item(const char* addr, const char* endpoint)
+{
+    struct addr_endpoint_t* t = s_endpoints + s_endpoints_size;
+    strcpy(t->addr, addr);
+    strcpy(t->endpoint, endpoint);
+    s_endpoints_size++;
+    return t->endpoint;
+}
 
 static int bind_new_endpoint(void* s, const char* addr)
 {
@@ -25,19 +60,14 @@ static int bind_new_endpoint(void* s, const char* addr)
     if (rc != 0)
         return rc;
     last_endpoint[len] = 0;
-
-    struct addr_endpoint_t* t = s_endpoints + s_endpoints_size;
-    strcpy(t->addr, addr);
-    strcpy(t->endpoint, last_endpoint);
-    s_endpoints_size++;
+    insert_endpoint_item(addr, last_endpoint);
     return 0;
 }
 
-static const char s_ipc_head[] = "ipc://";
-static const char s_inproc_head[] = "inproc://";
-
 static int is_x_addr(const char* addr)
 {
+    static const char s_ipc_head[] = "ipc://";
+    static const char s_inproc_head[] = "inproc://";
     return (strstr(addr, s_ipc_head) == addr ||
            strstr(addr, s_inproc_head) == addr);
 }
@@ -112,11 +142,52 @@ const char* zmq_endpoint_x(const char* addr)
         return addr;
 
     int i = 0;
-    for (i = 0; i < s_endpoints_size; ++i) {
+    for (; i < s_endpoints_size; ++i) {
         if (!strcmp(addr, s_endpoints[i].addr)) {
             return s_endpoints[i].endpoint;
         }
     }
+
+    if (!s_ipc_client)
+        return NULL;
+
+    // send resolve request to ipc server
+    char endpoint[256] = {0};
+    int len = zmq_send(s_ipc_client, addr, strlen(addr), 0);
+    if (len == -1)
+        return NULL;  // Interrupted
+    len = zmq_recv(s_ipc_client, endpoint, sizeof(endpoint), 0);
+    if (len == -1)
+        return NULL;  // Interrupted
+    endpoint[len] = 0;
+    // update local addr-to-endpoint cache
+    return insert_endpoint_item(addr, endpoint);
+}
+
+int zmq_init_x(void* ctx)
+{
+    s_ipc_server = zmq_socket(ctx, ZMQ_REP);
+    int rc = zmq_bind(s_ipc_server, s_ipc_endpoint);
+    if (rc == -1) {
+        if (zmq_errno() == EADDRINUSE) {
+            zmq_close(s_ipc_server);
+            s_ipc_server = NULL;
+            s_ipc_client = zmq_socket(ctx, ZMQ_REQ);
+            rc = zmq_connect(s_ipc_client, s_ipc_endpoint);
+            if (rc == -1)
+                printf("E: failed to connect to '%s' - %d\n", s_ipc_endpoint,
+                        zmq_errno());
+            return rc;
+        } else {
+            printf("E: failed to bind to '%s' - %d\n", s_ipc_endpoint,
+                    zmq_errno());
+            return -1;
+        }
+    }
+    // start ipc server to resolve ipc addresses
+    pthread_t ipc_server_th;
+    pthread_create(&ipc_server_th, NULL, ipc_server_task, NULL);
+
     return 0;
 }
 
