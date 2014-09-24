@@ -116,3 +116,6 @@ target_compile_definitions(named_pipe_server PRIVATE UNICODE _UNICODE)
 
 add_executable(named_pipe_client named_pipe_win/client.c)
 target_compile_definitions(named_pipe_client PRIVATE UNICODE _UNICODE)
+
+add_executable(zmq_x_test1 zmq_x_test1.c)
+target_link_libraries(zmq_x_test1 ${LIBS} zmq_x)

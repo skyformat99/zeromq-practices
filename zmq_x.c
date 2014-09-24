@@ -16,7 +16,7 @@ static int s_endpoints_size = 0;
 static int bind_new_endpoint(void* s, const char* addr)
 {
     int rc = 0;
-    rc = zmq_bind(s, "tcp://*:*");  // use "tcp://" instead
+    rc = zmq_bind(s, "tcp://127.0.0.1:*");  // use "tcp://" instead
     if (rc != 0)
         return rc;
     char last_endpoint[256];
