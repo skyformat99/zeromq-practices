@@ -7,6 +7,8 @@
 #include <czmq.h>
 #include <stdlib.h>
 
+#include "endpoints.h"
+
 int main(int argc, char* argv[])
 {
     // First argument is this broker's name
@@ -27,11 +29,7 @@ int main(int argc, char* argv[])
 
     // Bind state backend to endpoint
     void* statebe = zsocket_new(ctx, ZMQ_PUB);
-#ifdef WIN32  // ZeroMQ for Windows does not support IPC endpoints, use TCP instead
-    int rc = zsocket_bind(statebe, "tcp://*:%s", self);
-#else
-    int rc = zsocket_bind(statebe, "ipc://%s-state.ipc", self);
-#endif // WIN32
+    int rc = zsocket_bind(statebe, endpoints::state(self));
     if (rc == -1) {
         int last_errno = zmq_errno();
         char* endpoint = zsocket_last_endpoint(statebe);
@@ -48,11 +46,7 @@ int main(int argc, char* argv[])
     for (int i = 2; i < argc; ++i) {
         char* peer = argv[i];
         printf("I: connecting to state backend at %s...\n", peer);
-#ifdef WIN32
-        zsocket_connect(statefe, "tcp://127.0.0.1:%s", peer);
-#else
-        zsocket_connect(statefe, "ipc://%s-state.ipc", peer);
-#endif // WIN32
+        zsocket_connect(statefe, endpoints::state(peer));
     }
     
     // The main loop sends out messages to peers, and collects status messages

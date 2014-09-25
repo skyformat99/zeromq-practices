@@ -7,6 +7,7 @@
 #include <czmq.h>
 #include <stdlib.h>
 
+#include "endpoint.h"
 #include "time_util.h"
 
 namespace {
@@ -26,11 +27,7 @@ static void* client_task(void* arg)
 {
     zctx_t* ctx = zctx_new();
     void* client = zsocket_new(ctx, ZMQ_REQ);
-#ifdef WIN32  // ZeroMQ for Windows does not support IPC for the moment
-    zsocket_connect(client, "tcp://127.0.0.1:%s", self);
-#else
-    zsocket_connect(client, "ipc:///tmp/%s-localfe.ipc", self);
-#endif // WIN32
+    zsocket_connect(client, localfe_endpoint(self));
     
     while (true) {
         // Send request,  get reply
@@ -52,11 +49,7 @@ static void* worker_task(void* arg)
 {
     zctx_t* ctx = zctx_new();
     void* worker = zsocket_new(ctx, ZMQ_REQ);
-#ifdef WIN32
-    zsocket_connect(worker, "tcp://127.0.0.1:1%s", self);
-#else
-    zsocket_connect(worker, "ipc:///tmp/%s-localbe.ipc", self);
-#endif // WIN32
+    zsocket_connect(worker, localbe_endpoint(self));
 
     // Tell broker we're ready to work
     zframe_t* frame = zframe_new(WORKER_READY_MSG, 1);
@@ -103,11 +96,7 @@ int main(int argc, char* argv[])
     // Bind cloud frontend
     void* cloudfe = zsocket_new(ctx, ZMQ_ROUTER);
     zsocket_set_identity(cloudfe, self);
-#ifdef WIN32
-    zsocket_bind(cloudfe, "tcp://127.0.0.1:2%s", self);
-#else
-    zsocket_bind(cloudfe, "ipc:///tmp/%s-cloud.ipc", self);
-#endif // WIN32
+    zsocket_bind(cloudfe, cloud_endpoint(self));
 
     // Connect cloud backend to all peers
     void* cloudbe = zsocket_new(ctx, ZMQ_ROUTER);
@@ -115,23 +104,14 @@ int main(int argc, char* argv[])
     for (int i = 2; i < argc; ++i) {
         char* peer = argv[i];
         printf("I: connecting to cloud frontend at '%s'...\n", peer);
-#ifdef WIN32
-        zsocket_connect(cloudbe, "tcp://127.0.0.1:2%s", peer);
-#else
-        zsocket_connect(cloudbe, "ipc:///tmp/%s-cloud.ipc", peer);
-#endif // WIN32
+        zsocket_connect(cloudbe, cloud_endpoint(peer));
     }
     
     // Prepare local frontend and backend
     void* localfe = zsocket_new(ctx, ZMQ_ROUTER);
     void* localbe = zsocket_new(ctx, ZMQ_ROUTER);
-#ifdef WIN32
-    zsocket_bind(localfe, "tcp://127.0.0.1:%s", self);
-    zsocket_bind(localbe, "tcp://127.0.0.1:1%s", self);
-#else
-    zsocket_bind(localfe, "ipc:///tmp/%s-localfe.ipc", self);
-    zsocket_bind(localbe, "ipc:///tmp/%s-localbe.ipc", self);
-#endif // WIN32
+    zsocket_bind(localfe, localfe_endpoint(self));
+    zsocket_bind(localbe, localbe_endpoint(self));
 
     // Let the user to tell us when to start
     printf("Press 'Enter' when all brokers are started: ");

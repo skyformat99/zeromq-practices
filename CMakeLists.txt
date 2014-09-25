@@ -82,8 +82,11 @@ target_link_libraries(asyncsrv ${LIBS})
 add_executable(hello hello.cpp)
 target_link_libraries(hello ${LIBS})
 
+add_library(endpoints cluster/endpoints.cpp cluster/endpoints.h)
+add_library(endpoint cluster/endpoint.cpp cluster/endpoint.h)
+
 add_executable(state_flow cluster/state_flow.cpp)
-target_link_libraries(state_flow ${LIBS})
+target_link_libraries(state_flow ${LIBS} endpoints)
 
 add_executable(pub pub.cpp)
 target_link_libraries(pub ${LIBS} zmq_x czmq_x)
@@ -92,7 +95,7 @@ add_executable(sub sub.cpp)
 target_link_libraries(sub ${LIBS} zmq_x czmq_x)
 
 add_executable(task_flow cluster/task_flow.cpp)
-target_link_libraries(task_flow ${LIBS})
+target_link_libraries(task_flow ${LIBS} endpoint)
 
 add_executable(cluster cluster/prototype.cpp)
 target_link_libraries(cluster ${LIBS})
