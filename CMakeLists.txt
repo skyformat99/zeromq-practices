@@ -98,7 +98,7 @@ add_executable(task_flow cluster/task_flow.cpp)
 target_link_libraries(task_flow ${LIBS} endpoint)
 
 add_executable(cluster cluster/prototype.cpp)
-target_link_libraries(cluster ${LIBS})
+target_link_libraries(cluster ${LIBS} endpoint)
 
 add_library(zmq_x zmq_x.c)
 target_compile_definitions(zmq_x PRIVATE ZMQ_X_COMPILE)

@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "endpoint.h"
 #include "time_util.h"
 
 namespace {  // Internal
@@ -31,9 +32,9 @@ void* client_task(void* arg)
 
     zctx_t* ctx = zctx_new();
     void* client = zsocket_new(ctx, ZMQ_REQ);
-    zsocket_connect(client, "ipc:///tmp/%s-localfe.ipc", self);
+    zsocket_connect(client, localfe_endpoint(self));
     void* monitor = zsocket_new(ctx, ZMQ_PUSH);
-    zsocket_connect(monitor, "ipc:///tmp/%s-monitor.ipc", self);
+    zsocket_connect(monitor, monitor_endpoint(self));
 
     while (true) {
         msleep(randof(5) * 1000);
@@ -76,7 +77,7 @@ void* worker_task(void* arg)
 
     zctx_t* ctx = zctx_new();
     void* worker = zsocket_new(ctx, ZMQ_REQ);
-    zsocket_connect(worker, "ipc:///tmp/%s-localbe.ipc", self);
+    zsocket_connect(worker, localbe_endpoint(self));
     // Tell the broker that we're ready before serving any requests
     zframe_t* frame = zframe_new(WORKER_READY, 1);
     zframe_send(&frame, worker, 0);
@@ -110,7 +111,11 @@ int main(int argc, char* argv[])
     // First argument is name of this broker, other arguments are other
     // peers' names
     if (argc < 2) {
+#ifndef WIN32
         printf("syntax: %s me {other}...\n", argv[0]);
+#else
+        printf("syntax: %s ne_port {other_port}...\n", argv[0]);
+#endif //WIN32
         return 0;
     }
     self = argv[1];
@@ -121,38 +126,38 @@ int main(int argc, char* argv[])
     zctx_t* ctx = zctx_new();
     // Prepare local frontend and backend
     void* localfe = zsocket_new(ctx, ZMQ_ROUTER);
-    zsocket_bind(localfe, "ipc:///tmp/%s-localfe.ipc", self);
+    zsocket_bind(localfe, localfe_endpoint(self));
     void* localbe = zsocket_new(ctx, ZMQ_ROUTER);
-    zsocket_bind(localbe, "ipc:///tmp/%s-localbe.ipc", self);
+    zsocket_bind(localbe, localbe_endpoint(self));
 
     // Bind cloud frontend to endpoint
     void* cloudfe = zsocket_new(ctx, ZMQ_ROUTER);
     zsocket_set_identity(cloudfe, self);
-    zsocket_bind(cloudfe, "ipc:///tmp/%s-cloud.ipc", self);
+    zsocket_bind(cloudfe, cloud_endpoint(self));
     // Connect cloud backend to all peers
     void* cloudbe = zsocket_new(ctx, ZMQ_ROUTER);
     zsocket_set_identity(cloudbe, self);
     for (int i = 2; i < argc; ++i) {
         const char* peer = argv[i];
         printf("I: connecting to cloud frontend at '%s'...\n", peer);
-        zsocket_connect(cloudbe, "ipc:///tmp/%s-cloud.ipc", peer);
+        zsocket_connect(cloudbe, cloud_endpoint(peer));
     }
 
     // Bind state backend to endpoint
     void* statebe = zsocket_new(ctx, ZMQ_PUB);
-    zsocket_connect(statebe, "ipc:///tmp/%s-state.ipc", self);
+    zsocket_connect(statebe, state_endpoint(self));
     // Connect state frontend to all peers
     void* statefe = zsocket_new(ctx, ZMQ_SUB);
     zsocket_set_subscribe(statefe, "");
     for (int i = 2; i < argc; ++i) {
         const char* peer = argv[i];
         printf("I: connecting to state backend at '%s'...\n", peer);
-        zsocket_connect(statefe, "ipc:///tmp/%s-state.ipc", peer);
+        zsocket_connect(statefe, state_endpoint(self));
     }
 
     // Prepare monitor socket
     void* monitor = zsocket_new(ctx, ZMQ_PULL);
-    zsocket_bind(monitor, "ipc:///tmp/%s-monitor.ipc", self);
+    zsocket_bind(monitor, monitor_endpoint(self));
 
 
     // After binding and connecting all our sockets, start the child tasks -
