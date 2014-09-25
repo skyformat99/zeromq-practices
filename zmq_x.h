@@ -14,6 +14,7 @@ int zmq_disconnect_x(void* s, const char* addr);
 int zmq_socket_monitor_x(void* s, const char* addr, int events);
 
 int zmq_init_x(void* ctx);
+int _zmq_init_x(void* ctx, int clean);
 const char* zmq_endpoint_x(const char* addr);
 
 #if !defined(ZMQ_X_COMPILE) && defined(WIN32)

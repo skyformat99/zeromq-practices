@@ -86,10 +86,10 @@ add_executable(state_flow cluster/state_flow.cpp)
 target_link_libraries(state_flow ${LIBS})
 
 add_executable(pub pub.cpp)
-target_link_libraries(pub ${LIBS})
+target_link_libraries(pub ${LIBS} zmq_x czmq_x)
 
 add_executable(sub sub.cpp)
-target_link_libraries(sub ${LIBS})
+target_link_libraries(sub ${LIBS} zmq_x czmq_x)
 
 add_executable(task_flow cluster/task_flow.cpp)
 target_link_libraries(task_flow ${LIBS})

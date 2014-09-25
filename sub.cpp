@@ -6,18 +6,22 @@
 #include <czmq.h>
 #include <stdlib.h>
 
+#include "czmq_x.h"
+
 int main(int argc, char* argv[])
 {
     const char name[] = "pub";
     zctx_t* ctx = zctx_new();
+    czmq_init_x(ctx);
+
     void* sub = zsocket_new(ctx, ZMQ_SUB);
     zsocket_set_subscribe(sub, "");
-    //zsocket_connect(sub, "ipc://%s-server.ipc", name);
-#ifdef WIN32
-    zsocket_connect(sub, "tcp://127.0.0.1:2222");
-#else
-    zsocket_connect(sub, "ipc://pub.ipc");
-#endif
+    zsocket_connect(sub, "ipc://%s-server.ipc", name);
+//#ifdef WIN32
+//    zsocket_connect(sub, "tcp://127.0.0.1:2222");
+//#else
+//    zsocket_connect(sub, "ipc://pub.ipc");
+//#endif
     zmq_pollitem_t items[] = {
         { sub, 0, ZMQ_POLLIN, 0 }
     };

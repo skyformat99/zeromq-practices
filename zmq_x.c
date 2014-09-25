@@ -21,6 +21,7 @@ static void* s_ipc_client = NULL;
 
 static void* ipc_server_task(void* arg)
 {
+    void* ctx = arg;
     char addr[256] = {0};
     int len = 0;
     while (1) {
@@ -36,6 +37,8 @@ static void* ipc_server_task(void* arg)
             break;  // Interrupted
     }
     zmq_close(s_ipc_server);
+    if (ctx)
+        zmq_ctx_destroy(&ctx);
     return NULL;
 }
 
@@ -166,6 +169,10 @@ const char* zmq_endpoint_x(const char* addr)
 
 int zmq_init_x(void* ctx)
 {
+    _zmq_init_x(ctx, 0);
+}
+int _zmq_init_x(void* ctx, int clean)
+{
     s_ipc_server = zmq_socket(ctx, ZMQ_REP);
     int rc = zmq_bind(s_ipc_server, s_ipc_endpoint);
     if (rc == -1) {
@@ -175,18 +182,21 @@ int zmq_init_x(void* ctx)
             s_ipc_client = zmq_socket(ctx, ZMQ_REQ);
             rc = zmq_connect(s_ipc_client, s_ipc_endpoint);
             if (rc == -1)
-                printf("E: failed to connect to '%s' - %d\n", s_ipc_endpoint,
-                        zmq_errno());
+                printf("E: failed to connect to '%s' - %s\n", s_ipc_endpoint,
+                        strerror(zmq_errno()));
             return rc;
         } else {
-            printf("E: failed to bind to '%s' - %d\n", s_ipc_endpoint,
-                    zmq_errno());
+            printf("E: failed to bind to '%s' - %s\n", s_ipc_endpoint,
+                    strerror(zmq_errno()));
             return -1;
         }
     }
     // start ipc server to resolve ipc addresses
     pthread_t ipc_server_th;
-    pthread_create(&ipc_server_th, NULL, ipc_server_task, NULL);
+    if (clean)
+        pthread_create(&ipc_server_th, NULL, ipc_server_task, ctx);
+    else
+        pthread_create(&ipc_server_th, NULL, ipc_server_task, NULL);
 
     return 0;
 }

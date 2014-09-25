@@ -82,3 +82,11 @@ int zsocket_disconnect_x(void* self, const char* format, ...)
     else
         return zmq_disconnect_x(self, addr);
 }
+
+int czmq_init_x(zctx_t* ctx)
+{
+    //void* context = (void*)(*((int*)ctx));
+    //return zmq_init_x(context);
+    void* context = zmq_ctx_new();
+    return _zmq_init_x(context, 1);
+}

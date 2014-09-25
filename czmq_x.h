@@ -17,6 +17,9 @@ int zsocket_unbind_x(void* self, const char* format, ...);
 int zsocket_connect_x(void* self, const char* format, ...);
 int zsocket_disconnect_x(void* self, const char* format, ...);
 
+#include <czmq.h>
+int czmq_init_x(zctx_t* ctx);
+
 #if !defined(CZMQ_X_COMPILE) && defined (WIN32)
 #  define zsocket_bind zsocket_bind_x
 #  define zsocket_unbind zsocket_unbind_x

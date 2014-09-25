@@ -7,19 +7,22 @@
 #include <stdlib.h>
 
 #include "time_util.h"
+#include "czmq_x.h"
 
 int main(int argc, char* argv[])
 {
     char name[] = "pub";
     srand((unsigned)time(0));
     zctx_t* ctx = zctx_new();
+    czmq_init_x(ctx);
+
     void* pub = zsocket_new(ctx, ZMQ_PUB);
-    //zsocket_bind(pub, "ipc://%s-server.ipc", name);
-#ifdef WIN32
-    zsocket_bind(pub, "tcp://127.0.0.1:2222");
-#else
-    zsocket_bind(pub, "ipc://pub.ipc");
-#endif
+    zsocket_bind(pub, "ipc://%s-server.ipc", name);
+//#ifdef WIN32
+//    zsocket_bind(pub, "tcp://127.0.0.1:2222");
+//#else
+//    zsocket_bind(pub, "ipc://pub.ipc");
+//#endif
     printf("I: pub server is up\n");
     while (true) {
         int load = rand() % 11;
