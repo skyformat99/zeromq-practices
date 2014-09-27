@@ -14,8 +14,8 @@
 
 namespace {  // Internal
 
-const int NBR_CLIENTS = 1;
-const int NBR_WORKERS = 1;
+const int NBR_CLIENTS = 5;
+const int NBR_WORKERS = 3;
 const char WORKER_READY[] = "\001";  // Signal that worker is ready
 
 char* self = 0;
@@ -38,16 +38,16 @@ void* client_task(void* arg)
 
     while (true) {
         msleep(randof(5) * 1000);
-        int burst = randof(15);
+        int burst = randof(3);
         while (burst--) {
-            char task_id[5];
-            sprintf(task_id, "%04x", randof(0x10000));
+            char task_id[32];
+            sprintf(task_id, "%s-%04x", self, randof(0x10000));
             // Send request with random hex ID
             zstr_send(client, task_id);
             // Wait at most ten seconds for reply, then complain
             zmq_pollitem_t items[] = { { client, 0, ZMQ_POLLIN, 0 } };
-            //int rc = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC * 1000);
-            int rc = zmq_poll(items, 1, -1);
+            int rc = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC * 1000);
+            //int rc = zmq_poll(items, 1, -1);
             if (rc == -1)
                 break;  // Interrupted
             if (items[0].revents & ZMQ_POLLIN) {
@@ -88,6 +88,7 @@ void* worker_task(void* arg)
             break;  // Interrupted
         // Sleep for 0 or 1 seconds, to simulate the real request handling
         // procedure
+        zframe_print(zmsg_first(msg), "processing request - ");
         msleep(randof(2) * 1000);
         zmsg_send(&msg, worker);
     }
@@ -114,7 +115,7 @@ int main(int argc, char* argv[])
 #ifndef WIN32
         printf("syntax: %s me {other}...\n", argv[0]);
 #else
-        printf("syntax: %s ne_port {other_port}...\n", argv[0]);
+        printf("syntax: %s me_port {other_port}...\n", argv[0]);
 #endif //WIN32
         return 0;
     }
@@ -123,6 +124,9 @@ int main(int argc, char* argv[])
     printf("I: preparing broker at %s...\n", self);
     srand((unsigned int)time(0));
 
+#ifdef WIN32
+    zsys_init();
+#endif
     zctx_t* ctx = zctx_new();
     // Prepare local frontend and backend
     void* localfe = zsocket_new(ctx, ZMQ_ROUTER);
@@ -209,8 +213,12 @@ int main(int argc, char* argv[])
             // Do not route the message further if it's READY message,
             // by destroying it
             zframe_t* frame = zmsg_first(msg);
-            if (!memcmp(zframe_data(frame), WORKER_READY, 1))
+            char* frame_data = (char*)zframe_data(frame);
+            int frame_size = zframe_size(frame);
+            //if (!memcmp(zframe_data(frame), WORKER_READY, 1))
+            if (!memcmp(frame_data, WORKER_READY, 1)) {
                 zmsg_destroy(&msg);
+            }
         }
         // Reply from peer broker
         else if (primary[1].revents & ZMQ_POLLIN) {
@@ -252,7 +260,7 @@ int main(int argc, char* argv[])
         // Now route as many clients requests as we can handle. If we have
         // local capacity, then poll both localfe and cloudfe, 'cause
         // requests from cloudfe should only be routed to local workers.
-        // If we have cloud capacity only, the poll just localfe.
+        // If we have cloud capacity only, then poll just localfe.
         // Route requests locally if possible, otherwise, route to cloud
         // peers.
         while (local_capacity + cloud_capacity) {
