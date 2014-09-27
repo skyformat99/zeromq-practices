@@ -14,8 +14,8 @@
 
 namespace {  // Internal
 
-const int NBR_CLIENTS = 5;
-const int NBR_WORKERS = 3;
+const int NBR_CLIENTS = 10;
+const int NBR_WORKERS = 5;
 const char WORKER_READY[] = "\001";  // Signal that worker is ready
 
 char* self = 0;
@@ -38,7 +38,7 @@ void* client_task(void* arg)
 
     while (true) {
         msleep(randof(5) * 1000);
-        int burst = randof(3);
+        int burst = randof(15);
         while (burst--) {
             char task_id[32];
             sprintf(task_id, "%s-%04x", self, randof(0x10000));
@@ -47,7 +47,6 @@ void* client_task(void* arg)
             // Wait at most ten seconds for reply, then complain
             zmq_pollitem_t items[] = { { client, 0, ZMQ_POLLIN, 0 } };
             int rc = zmq_poll(items, 1, 10 * ZMQ_POLL_MSEC * 1000);
-            //int rc = zmq_poll(items, 1, -1);
             if (rc == -1)
                 break;  // Interrupted
             if (items[0].revents & ZMQ_POLLIN) {
@@ -88,7 +87,7 @@ void* worker_task(void* arg)
             break;  // Interrupted
         // Sleep for 0 or 1 seconds, to simulate the real request handling
         // procedure
-        zframe_print(zmsg_first(msg), "processing request - ");
+        zframe_print(zmsg_last(msg), "processing task ");
         msleep(randof(2) * 1000);
         zmsg_send(&msg, worker);
     }
@@ -149,7 +148,7 @@ int main(int argc, char* argv[])
 
     // Bind state backend to endpoint
     void* statebe = zsocket_new(ctx, ZMQ_PUB);
-    zsocket_connect(statebe, state_endpoint(self));
+    zsocket_bind(statebe, state_endpoint(self));
     // Connect state frontend to all peers
     void* statefe = zsocket_new(ctx, ZMQ_SUB);
     zsocket_set_subscribe(statefe, "");
