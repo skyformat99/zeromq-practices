@@ -1,11 +1,9 @@
 // task_sink.cpp
 //
 #include <zmq.h>
+#include <zmq_utils.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <boost/chrono.hpp>
-
-using namespace boost::chrono;
 
 int main(int argc, char* argv[])
 {
@@ -16,7 +14,7 @@ int main(int argc, char* argv[])
     // Wait for start of batch
     zmq_recv(sink, buf, 10, 0);
     // Timing
-    system_clock::time_point start = system_clock::now();
+    void* stopwatch = zmq_stopwatch_start();
     // Process 100 confirmations
     for (int t = 0; t < 100; ++t) {
         zmq_recv(sink, buf, 10, 0);
@@ -26,9 +24,9 @@ int main(int argc, char* argv[])
             printf(".");
         fflush(stdout);
     }
-    duration<double> elapsed = system_clock::now() - start;
+    unsigned long elapsed_micros = zmq_stopwatch_stop(stopwatch);
     // Calc and report
-    printf("Total elapsed time: %.2f ms\n", elapsed.count()*1000);
+    printf("Total elapsed time: %.2f ms\n", elapsed_micros*1.0/1000);
 
     zmq_close(sink);
     zmq_ctx_destroy(context);
