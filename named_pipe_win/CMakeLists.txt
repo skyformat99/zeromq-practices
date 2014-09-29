@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(zeromq-practices)
+project(named-pipe-win)
 
 # Setup build-related defaults
 if(NOT CMAKE_BUILD_TYPE)
@@ -12,8 +12,14 @@ if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/runtime)
 endif()
 
-add_subdirectory(chap2-sockets-and-patterns)
-add_subdirectory(chap3-advanced-req-rep-patterns)
-add_subdirectory(zmq_x)
-add_subdirectory(czmq_x)
-add_subdirectory(named_pipe_win)
+get_filename_component(DEPENDS_DIR ${CMAKE_SOURCE_DIR}/depends ABSOLUTE)
+list(APPEND CMAKE_MODULE_PATH ${DEPENDS_DIR}/cmake)
+
+add_definitions(
+    -DUNICODE
+    -D_UNICODE
+)
+
+add_executable(named_pipe_server server.c)
+
+add_executable(named_pipe_client client.c)
