@@ -27,6 +27,7 @@ include_directories(
     ${ZEROMQ_INCLUDE_DIRS}
     ${CZMQ_INCLUDE_DIRS}
     ${PTHREAD_INCLUDE_DIRS}
+    ${DEPENDS_DIR}/cppzmq
 )
 
 set(LIBS

@@ -21,6 +21,7 @@ find_package(Pthread REQUIRED)
 
 include_directories(
     .
+    ..
     ${ZEROMQ_INCLUDE_DIRS}
     ${CZMQ_INCLUDE_DIRS}
     ${PTHREAD_INCLUDE_DIRS}
