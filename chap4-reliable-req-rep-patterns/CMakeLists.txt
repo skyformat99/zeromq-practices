@@ -35,3 +35,6 @@ target_link_libraries(lpclient ${LIBS})
 
 add_executable(lpserver lpserver.cpp)
 target_link_libraries(lpserver ${LIBS})
+
+add_executable(spbroker spbroker.cpp)
+target_link_libraries(spbroker ${LIBS})
