@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(chap3-advanced-rep-req-patterns)
+project(chap3-advanced-req-rep-patterns)
 
 # Setup build-related defaults
 if(NOT CMAKE_BUILD_TYPE)
