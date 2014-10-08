@@ -1,7 +1,7 @@
 /**
- * @file spbroker.cpp
+ * @file spqueue.cpp
  *
- * @breif Simple Pirate broker
+ * @breif Simple Pirate queue (broker)
  * This is identical to the load-balancing pattern, with no reliability
  * mechanisms. It depends on the client for recovery.
  * Runs forever.
