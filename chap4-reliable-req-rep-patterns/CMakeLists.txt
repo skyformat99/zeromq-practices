@@ -47,3 +47,6 @@ target_link_libraries(spworker ${LIBS})
 # Paranoid-Pirate
 add_executable(ppqueue ppqueue.c)
 target_link_libraries(ppqueue ${LIBS})
+
+add_executable(ppworker ppworker.c)
+target_link_libraries(ppworker ${LIBS})

@@ -28,7 +28,7 @@ static worker_t* s_worker_new(zframe_t* identity)
     worker_t* self = (worker_t*)zmalloc(sizeof(worker_t));
     assert(self);
     self->identity = identity;
-    self->id_string = zframe_strhex(identity);
+    self->id_string = zframe_strdup(identity);
     self->expiry = zclock_time() + HEARTBEAT_LIVENESS * HEARTBEAT_INTERVAL;
     return self;
 }
@@ -152,6 +152,7 @@ int main()
         if (zclock_time() >= heartbeat_at) {
             worker_t* worker = (worker_t*)zlist_first(workers);
             while (worker) {
+                printf("I: heartbeat to worker (%s)\n", worker->id_string);
                 zframe_send(&worker->identity, backend,
                         ZFRAME_REUSE + ZFRAME_MORE);
                 zframe_t* frame = zframe_new(PPP_HEARTBEAT, 1);
