@@ -50,3 +50,7 @@ target_link_libraries(ppqueue ${LIBS})
 
 add_executable(ppworker ppworker.c)
 target_link_libraries(ppworker ${LIBS})
+
+add_library(mdcli majordomo/mdcliapi.h majordomo/mdcliapi.c)
+add_executable(mdclient majordomo/mdclient.c)
+target_link_libraries(mdclient mdcli ${LIBS})
