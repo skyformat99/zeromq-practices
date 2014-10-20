@@ -7,22 +7,12 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "mdp.h"
+
 #define HEARTBEAT_LIVENESS 3
 #define HEARTBEAT_INTERVAL 2000
 #define RECONNECT_DELAY_INIT 2000
 #define RECONNECT_DELAY_MAX  32000
-
-#define MDPW_WORKER "MDPW01"
-
-#define MDPW_READY "\001"
-#define MDPW_REQUEST "\002"
-#define MDPW_REPLY "\003"
-#define MDPW_HEARTBEAT "\004"
-#define MDPW_DISCONNECT "\005"
-
-static const char* mdps_commands[] = {
-   "", "READY", "REQUEST", "REPLY", "HEARTBEAT", "DISCONNECT"
-};
 
 struct _mdwrk_t {
     zctx_t* ctx;
@@ -52,7 +42,7 @@ void s_mdwrk_send_to_broker(mdwrk_t* self, char* command, char* option,
         zmsg_pushstr(msg, option);
     zmsg_pushstr(msg, command);
     // stack protocol evelope to the start of message
-    zmsg_pushstr(msg, MDPW_WORKER);
+    zmsg_pushstr(msg, MDPW_HEADER);
     zmsg_pushstr(msg, "");
     if (self->verbose) {
         zclock_log("I: sending %s to broker", mdps_commands[(int) *command]);
@@ -159,7 +149,7 @@ zmsg_t* mdwrk_recv(mdwrk_t* self, zmsg_t** reply_p)
             assert(zframe_size(empty) == 0);
             zframe_destroy(&empty);
             zframe_t* header = zmsg_pop(msg);
-            assert(zframe_streq(header, MDPW_WORKER));
+            assert(zframe_streq(header, MDPW_HEADER));
             zframe_destroy(&header);
             zframe_t* command = zmsg_pop(msg);
             if (zframe_streq(command, MDPW_REQUEST)) {
